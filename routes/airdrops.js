@@ -52,7 +52,8 @@ router.delete('/airdrops/delete/:telegramId', async (req, res) => {
             .from('users')
             .update({
                 airdropClaimCount: 0, // Reset the claim count
-                unclaimedAirdropTotal: 0, // Reset the unclaimed total
+                unclaimedAirdropTotal: 0,
+                messageIndex: 0, // Reset the unclaimed total
             })
             .eq('telegramId', telegramId); // Ensure this matches the identifier in your users table
 
