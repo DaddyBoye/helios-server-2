@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const router = express.Router();
+const axios = require('axios');
 const { createClient } = require('@supabase/supabase-js');
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -21,6 +22,32 @@ const generateReferralToken = (telegramId) => {
     hash.update(tokenString);
     const hashedValue = hash.digest('hex');
     return `ref_${hashedValue.substring(0, 16)}`; // Concatenate 'ref_' and the first 16 characters of the hash
+};
+
+// Function to send a welcome message
+const sendWelcomeMessage = async (chatId) => {
+    const BOT_TOKEN = process.env.BOT_TOKEN || '7394104022:AAFbbeaeuGx0zUKPKejUTdrVgzvjVlnCDfo';
+    const TELEGRAM_API_URL = `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`;
+
+    const imageUrl = 'https://i.imgur.com/w1oV4xH.jpeg'; // New image URL
+    const message = `🎉 *Welcome to Helios!* 🌍\n\n` +
+        `🌟 *Your journey towards impactful climate action begins here.*\n\n` +
+        `🌱 *Complete daily missions and earn rewards*\n` +
+        `💫 *Track your environmental progress*\n` +
+        `💎 *Participate in exciting airdrops and events*\n\n` +
+        `Together, we can create a sustainable future. Let's get started! ⚡️`;
+
+    try {
+        await axios.post(TELEGRAM_API_URL, {
+            chat_id: chatId,
+            photo: imageUrl,
+            caption: message,
+            parse_mode: 'Markdown',
+        });
+        console.log(`Welcome message sent to chat ID: ${chatId}`);
+    } catch (error) {
+        console.error('Error sending welcome message:', error.message);
+    }
 };
 
 // Route to handle user creation
@@ -93,6 +120,9 @@ router.post('/user', async (req, res) => {
             }
 
             user = newUser[0]; // Access the newly created user
+
+            // Send a welcome message after user creation
+            await sendWelcomeMessage(telegramId, firstName);
 
             // Log the referral if the referrer exists
             if (referredBy) {
