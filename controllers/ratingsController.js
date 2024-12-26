@@ -71,6 +71,45 @@ router.post('/ratings', async (req, res) => {
     }
 });
 
+// Get the rating of a project by a specific user
+router.get('/ratings/:projectId/user', async (req, res) => {
+    const { projectId } = req.params;
+    const { telegramId } = req.query;
+
+    if (!telegramId) {
+        return res.status(400).json({ error: 'telegramId query parameter is required.' });
+    }
+
+    try {
+        const { data: userRating, error } = await supabase
+            .from('ratings')
+            .select('rating, comment')
+            .eq('project_id', projectId)
+            .eq('telegramId', telegramId)
+            .maybeSingle(); // Use maybeSingle to fetch a single result or null
+
+        if (error) {
+            console.error('Error fetching user rating:', error);
+            return res.status(500).json({ error: 'Failed to fetch user rating' });
+        }
+
+        // Build the response
+        const response = {
+            hasRated: !!userRating, // Boolean indicating if the user has rated
+            rating: userRating?.rating || null,
+            comment: userRating?.comment || null,
+        };
+
+        // Log successful retrieval or absence of rating
+        console.log('User rating retrieved:', response);
+
+        res.status(200).json(response);
+    } catch (err) {
+        console.error('Unexpected error:', err);
+        res.status(500).json({ error: 'An unexpected error occurred' });
+    }
+});
+
 // Get all ratings for a project
 router.get('/ratings/:projectId', async (req, res) => {
     const { projectId } = req.params;
